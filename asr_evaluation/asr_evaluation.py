@@ -111,31 +111,38 @@ def process_line_pair(ref_line, hyp_line, case_insensitive=False, remove_empty_r
     global ref_token_count
     global sent_error_count
 
-    # Split into tokens by whitespace
-    ref = ref_line.split()
-    hyp = hyp_line.split()
-    id_ = None
+    # allow for multiple references, separated by '|':
+    # hypothesis is compared until a full match is found or no more reference alternatives exist
+    ref_alts = ref_line.split('|')
+    for (ref_alt, first, last) in zip(ref_alts, [True] + [False]*(len(ref_alts)-1), [False]*(len(ref_alts)-1) + [True]):
+        # Split into tokens by whitespace
+        ref = ref_alt.split()
+        hyp = hyp_line.split()
+        id_ = None
 
-    # If the files have IDs, then split the ID off from the text
-    if files_head_ids:
-        id_ = ref[0]
-        ref, hyp = remove_head_id(ref, hyp)
-    elif files_tail_ids:
-        id_ = ref[-1]
-        ref, hyp = remove_tail_id(ref, hyp)
+        # If the files have IDs, then split the ID off from the text
+        if files_head_ids & first:
+            id_ = ref[0]
+            ref, hyp = remove_head_id(ref, hyp)
+        elif files_tail_ids & last:
+            id_ = ref[-1]
+            ref, hyp = remove_tail_id(ref, hyp)
 
-    if case_insensitive:
-        ref = list(map(str.lower, ref))
-        hyp = list(map(str.lower, hyp))
-    if remove_empty_refs and len(ref) == 0:
-        return False
+        if case_insensitive:
+            ref = list(map(str.lower, ref))
+            hyp = list(map(str.lower, hyp))
+        if remove_empty_refs and len(ref) == 0:
+            return False
 
-    # Create an object to get the edit distance, and then retrieve the
-    # relevant counts that we need.
-    sm = SequenceMatcher(a=ref, b=hyp)
-    errors = get_error_count(sm)
-    matches = get_match_count(sm)
-    ref_length = len(ref)
+        # Create an object to get the edit distance, and then retrieve the
+        # relevant counts that we need.
+        sm = SequenceMatcher(a=ref, b=hyp)
+        errors = get_error_count(sm)
+        matches = get_match_count(sm)
+        ref_length = len(ref)
+        # stop if it's a full match
+        if errors==0 and matches==ref_length:
+            break
 
     # Increment the total counts we're tracking
     error_count += errors
