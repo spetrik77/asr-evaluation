@@ -221,7 +221,7 @@ def print_instances(ref, hyp, sm, id_=None):
     """Print a single instance of a ref/hyp pair."""
     print_diff(sm, ref, hyp)
     if id_:
-        print(('SENTENCE:  {1!s}'.format(id_)))
+        print(('SENTENCE:  {0!s}'.format(id_)))
     else:
         print('SENTENCE:  {0:d}'.format(counter + 1))
     # Handle cases where the reference is empty without dying
